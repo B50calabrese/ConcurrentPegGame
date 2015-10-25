@@ -1,6 +1,3 @@
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Main driver class for the PegGame.
  */
@@ -25,30 +22,23 @@ public class PegGame {
             System.exit(0);
         }
 
-        // TODO(acalabrese): Solve here.
-        PegGameThreadManager manager = new PegGameThreadManager(15, 5);
-
-        List<PegThread> initialThreads = new ArrayList<>();
-
-        for (int i = 0 ; i < manager.getNumberOfPegs() ; i++) {
+        int totalPegs = PegGameUtils.TOTAL_PEGS_TABLE[rows];
+        ThreadManager manager = new ThreadManager(rows, totalPegs);
+        int max = PegGameUtils.TOTAL_PEGS_TABLE[(rows / 2) + (rows % 2)];
+        for (int i = 0 ; i < max ; i++) {
             // First create the initial board.
-            boolean[] newBoard = new boolean[manager.getNumberOfPegs()];
-            for (int j = 0 ; j < manager.getNumberOfPegs() ; j++) {
+            boolean[] newBoard = new boolean[totalPegs];
+            for (int j = 0 ; j < totalPegs ; j++) {
                 newBoard[j] = (i == j ? false : true);
             }
-
-            PegThread pegThread = new PegThread(newBoard, manager.getNumberOfPegs() - 1, manager);
-            initialThreads.add(pegThread);
-            pegThread.start();
+            manager.queueJob(new BoardJob(totalPegs - 1, i, 1, newBoard, ""));
         }
 
-        for (PegThread thread : initialThreads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        try {
+            manager.runJobs();
+            System.out.println(manager.getBestJob());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        System.out.println("Best score was : " + manager.getCurrentBestScore());
     }
 }

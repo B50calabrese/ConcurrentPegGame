@@ -6,24 +6,55 @@ import java.util.List;
  */
 public class MoveThread extends Thread {
 
-    private boolean[] board;
-    private int pegToInspect;
+    private BoardJob job;
+    private ThreadManager threadManager;
     private int numberOfRows;
+    private int numberOfTotalPegs;
     private List<Move> validMoves;
 
-    public MoveThread(int peg, boolean[] board, int numberOfRows) {
-        this.numberOfRows = numberOfRows;
-        pegToInspect = peg;
-        this.board = board;
+    public MoveThread(BoardJob job, ThreadManager threadManager) {
+        this.job = job;
+        this.threadManager = threadManager;
+        this.numberOfRows = threadManager.getNumberOfRows();
+        this.numberOfTotalPegs = threadManager.getNumberOfTotalPegs();
         validMoves = new ArrayList<>();
-    }
-
-    public List<Move> getValidMoves() {
-        return validMoves;
     }
 
     @Override
     public void run() {
+        // First we populate the list of all valid moves by testing the neighbors.
+        for (int i = 0 ; i < numberOfTotalPegs ; i++) {
+            if (job.board[i]) {
+                testNeighborMoves(i);
+            }
+        }
+
+        // If we found no valid move then we are done!!!
+        if (validMoves.size() == 0) {
+            threadManager.foundBoard(job);
+            threadManager.threadFinished(this);
+            return;
+        }
+
+        // If we still have moves, then we need to enque the jobs on the thread manager's queue.
+        for (Move move : validMoves) {
+            boolean[] newBoard = job.board.clone();
+            newBoard[move.newPosition] = true;
+            newBoard[move.originalPosition] = false;
+            newBoard[move.removedPiece] = false;
+            BoardJob newJob =
+                    new BoardJob(job.pegsLeft - 1, job.initialPeg, job.totalMoves + 1, newBoard,
+                            job.moveString + "\n" + move);
+            threadManager.queueJob(newJob);
+        }
+
+        threadManager.threadFinished(this);
+    }
+
+    /**
+     * Finds all available moves for the peg in question and then adds them to the valid list.
+     */
+    private void testNeighborMoves(int pegToInspect) {
         // These are the 6 possible move directions with O being the peg in
         // question.
         //  6 1
@@ -92,7 +123,8 @@ public class MoveThread extends Thread {
         }
         int lD = PegGameUtils.getDisplacement(move.newPosition);
         if (0 <= lR && lR <= numberOfRows - 1 && 0 <= lD && lD <= lR) {
-            boolean b = (board[move.originalPosition] && !board[move.newPosition] && board[move.removedPiece]);
+            boolean b =
+                    (job.board[move.originalPosition] && !job.board[move.newPosition] && job.board[move.removedPiece]);
             if (b) {
                 validMoves.add(move);
             }

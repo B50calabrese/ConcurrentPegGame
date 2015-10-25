@@ -1,0 +1,1 @@
+Before running the code you must make sure the there is an environment variable "GOPATH" set to the current directory.
