@@ -14,6 +14,17 @@ type BoardJob struct {
 }
 
 /**
+ * Creates the next board job given the previous one and the new state of the board.
+ */
+func NewBoardJobWithMove(job BoardJob, newBoard []bool, moveString string) BoardJob {
+    pegsLeft := job.PegsLeft
+    initialPeg := job.InitialPeg
+    totalMoves := job.TotalMoves
+    newMoveString := job.MoveString + "\n" + moveString
+    return BoardJob{pegsLeft, initialPeg, totalMoves, newMoveString, newBoard}
+}
+
+/**
  * Returns the string representation of the board job.
  */
 func BoardJobToString(b BoardJob) string {
