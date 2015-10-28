@@ -27,15 +27,32 @@ func main() {
         os.Exit(0)
     }
 
-    fmt.Println("Rows : ", util.TOTAL_PEGS_TABLE[rows]);
-    fmt.Println("Row : ", util.GetRow(4));
-    fmt.Println("Displacement : ", util.GetDisplacement(4));
-    fmt.Println("PegNumber : ", util.GetPegNumber(2, 1));
+    totalPegs := util.TOTAL_PEGS_TABLE[rows]
+    maxPegs := util.TOTAL_PEGS_TABLE[(rows / 2) + (rows % 2)]
+    channel := make(chan string, 1)
 
-    m := util.Move{1,2,3}
-    fmt.Println(util.MoveToString(m))
+    for i := 0 ; i < maxPegs ; i++ {
+        newBoard := createBoard(i, totalPegs)
+        job := util.BoardJob{totalPegs - 1, i, 0, "", newBoard}
+        thread := threading.NewMoveThread(job, rows, totalPegs)
+        go threading.RunMoveThread(thread, channel)
+    }
 
-    job := util.BoardJob{0, 0, 0, "", []bool{true, false}}
-    thread := threading.NewMoveThread(job, 10, 15)
-    fmt.Println(threading.MoveThreadToString(thread))
+    val := <-channel
+    fmt.Println(val)
+}
+
+/**
+ * Creates a fresh board with a peg removed.
+ */
+func createBoard(falsePeg int, totalPegs int) []bool {
+    newBoard := make([]bool, totalPegs, totalPegs + 1)
+    for j := 0 ; j < totalPegs ; j++ {
+        if (falsePeg == j) {
+            newBoard[j] = false
+        } else {
+            newBoard[j] = true
+        }
+    }
+    return newBoard
 }

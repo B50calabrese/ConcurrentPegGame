@@ -14,13 +14,16 @@ func GetRow(pegNumber int) int {
     for j := 0 ; TOTAL_PEGS_TABLE[j] <= pegNumber ; j++ {
         i = j
     }
-    return (i - 1)
+    return i
 }
 
 /**
  * Returns the displacement for the given peg number.
  */
 func GetDisplacement(pegNumber int) int {
+    if (GetRow(pegNumber) < 0) {
+        return -1
+    }
     return pegNumber - TOTAL_PEGS_TABLE[GetRow(pegNumber)]
 }
 

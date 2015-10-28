@@ -19,7 +19,7 @@ type BoardJob struct {
 func NewBoardJobWithMove(job BoardJob, newBoard []bool, moveString string) BoardJob {
     pegsLeft := job.PegsLeft
     initialPeg := job.InitialPeg
-    totalMoves := job.TotalMoves
+    totalMoves := job.TotalMoves + 1
     newMoveString := job.MoveString + "\n" + moveString
     return BoardJob{pegsLeft, initialPeg, totalMoves, newMoveString, newBoard}
 }

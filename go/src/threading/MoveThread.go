@@ -2,7 +2,6 @@ package threading
 
 import (
     "container/list"
-    "fmt"
     "strconv"
     "util"
 )
@@ -34,7 +33,7 @@ func MoveThreadToString(moveThread MoveThread) string {
     return "Rows : " + strconv.Itoa(moveThread.NumberOfRows) + ", Number of Total Pegs : " + strconv.Itoa(moveThread.NumberOfTotalPegs)
 }
 
-func RunMoveThread(moveThread MoveThread) {
+func RunMoveThread(moveThread MoveThread, channel chan string) {
     // First populate the move thread's list of moves.
     for i := 0 ; i < moveThread.NumberOfTotalPegs ; i++ {
         if (moveThread.Job.Board[i]) {
@@ -45,6 +44,7 @@ func RunMoveThread(moveThread MoveThread) {
     // If there a no valid moves then we need to notify somebody.
     if (moveThread.ValidMoves.Len() == 0) {
         // TODO(acalabrese): Notify somebody that we finished here.
+        channel <- util.BoardJobToString(moveThread.Job)
         return;
     }
 
@@ -58,7 +58,8 @@ func RunMoveThread(moveThread MoveThread) {
         newBoard[move.RemovePiece] = false
         newJob := util.NewBoardJobWithMove(moveThread.Job, newBoard, util.MoveToString(move))
         // TODO(acalabrese): Queue the job here.
-        fmt.Println(newJob)
+        newMoveThread := NewMoveThread(newJob, moveThread.NumberOfRows, moveThread.NumberOfTotalPegs)
+        go RunMoveThread(newMoveThread, channel)
         element = element.Next()
     }
 }
@@ -135,7 +136,7 @@ func testMove(moveThread MoveThread, move util.Move) {
     }
     lD := util.GetDisplacement(move.NewPosition)
     if (0 <= lR && lR <= moveThread.NumberOfRows && 0 <= lD && lD <= lR) {
-        b := bool(moveThread.Job.Board[move.OriginalPosition] && !moveThread.Job.Board[move.NewPosition] && moveThread.Job.Board[move.RemovePiece])
+        b := (moveThread.Job.Board[move.OriginalPosition] && !moveThread.Job.Board[move.NewPosition] && moveThread.Job.Board[move.RemovePiece])
         if (b) {
             moveThread.ValidMoves.PushFront(move)
         }
