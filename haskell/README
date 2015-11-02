@@ -1,3 +1,6 @@
+Packages to install:
+monad-par
+
 To build:
 
 ./build.sh
