@@ -11,7 +11,6 @@ import (
  */
 type MoveThread struct {
     Job util.BoardJob
-    /** TODO(acalabrese): ThreadManager?? **/
     NumberOfRows int
     NumberOfTotalPegs int
     ValidMoves *list.List
@@ -19,7 +18,6 @@ type MoveThread struct {
 
 /**
  * Creates a new MoveThread for the given parameters.
- * TODO(acalabrese): Do I need to do the ThreadManager?
  */
 func NewMoveThread(job util.BoardJob, numberOfRows int, numberOfTotalPegs int) MoveThread {
     l := list.New()
@@ -57,7 +55,6 @@ func RunMoveThread(moveThread MoveThread, channel chan string) {
         newBoard[move.OriginalPosition] = false
         newBoard[move.RemovePiece] = false
         newJob := util.NewBoardJobWithMove(moveThread.Job, newBoard, util.MoveToString(move))
-        // TODO(acalabrese): Queue the job here.
         newMoveThread := NewMoveThread(newJob, moveThread.NumberOfRows, moveThread.NumberOfTotalPegs)
         go RunMoveThread(newMoveThread, channel)
         element = element.Next()
