@@ -8,7 +8,8 @@ public class ThreadManager {
 
     private boolean finished;
     private List<Thread> threadPool;
-    private Queue<BoardJob> jobQueue;
+    private List<BoardJob>[] jobArray;
+    private int queuedJobs;
     private BoardJob bestJob;
     private int numberOfRows;
     private int numberOfTotalPegs;
@@ -18,8 +19,12 @@ public class ThreadManager {
         this.numberOfRows = numberOfRows;
         this.numberOfTotalPegs = numberOfTotalPegs;
         threadPool = new ArrayList<>();
-        jobQueue = new PriorityQueue<>();
         lock = new Object();
+        jobArray = new List[numberOfTotalPegs];
+        for (int i = 0 ; i < numberOfTotalPegs ; i++) {
+            jobArray[i] = new ArrayList<>();
+        }
+        queuedJobs = 0;
     }
 
     public int getNumberOfTotalPegs() {
@@ -39,7 +44,8 @@ public class ThreadManager {
      */
     public void queueJob(BoardJob job) {
         synchronized (lock) {
-            jobQueue.add(job);
+            jobArray[job.pegsLeft].add(job);
+            queuedJobs++;
             lock.notifyAll();
         }
     }
@@ -69,7 +75,7 @@ public class ThreadManager {
         while (!finished) {
             synchronized (lock) {
                 // If we have no jobs, wait until we have work to do.
-                while (jobQueue.size() <= 0) {
+                while (queuedJobs <= 0) {
                     lock.wait();
                 }
 
@@ -80,12 +86,24 @@ public class ThreadManager {
                     lock.wait();
                 }
 
-                BoardJob job = jobQueue.poll();
-                System.out.println("Running job : " + job.initialPeg + " " + job.pegsLeft + " " + jobQueue.size());
+                BoardJob job = getNextJob();
+                queuedJobs--;
                 Thread t = new MoveThread(job, this);
                 threadPool.add(t);
                 t.start();
             }
         }
+    }
+
+    /**
+     * Gets the next job that comes in the array of lists.
+     */
+    private BoardJob getNextJob() {
+        for (int i = numberOfTotalPegs - 1 ; i >= 0 ; i--) {
+            if (jobArray[i].size() > 0) {
+                return jobArray[i].remove(0);
+            }
+        }
+        return null;
     }
 }
