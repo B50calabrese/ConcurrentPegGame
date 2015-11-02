@@ -28,13 +28,18 @@ func main() {
     }
 
     totalPegs := util.TOTAL_PEGS_TABLE[rows]
+
+    // Some bookkeeping to have a central location for useful data.
+    util.SetTotalPegs(totalPegs)
+    util.SetNumberOfRows(rows)
+
     maxPegs := util.TOTAL_PEGS_TABLE[(rows / 2) + (rows % 2)]
     channel := make(chan string, 1)
 
     for i := 0 ; i < maxPegs ; i++ {
         newBoard := createBoard(i, totalPegs)
         job := util.BoardJob{totalPegs - 1, i, 0, "", newBoard}
-        thread := threading.NewMoveThread(job, rows, totalPegs)
+        thread := threading.NewMoveThread(job)
         go threading.RunMoveThread(thread, channel)
     }
 

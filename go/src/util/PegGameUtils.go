@@ -6,6 +6,38 @@ var TOTAL_PEGS_TABLE = []int {
 
 var MAX_ROWS = 12
 
+var TOTAL_PEGS = 0
+
+var NUMBER_OF_ROWS = 0
+
+/**
+ * Sets the total number of pegs for the current test.
+ */
+func SetTotalPegs(pegs int) {
+    TOTAL_PEGS = pegs
+}
+
+/**
+ * Gets the total number of pegs for the current test.
+ */
+func GetTotalPegs() int {
+    return TOTAL_PEGS
+}
+
+/**
+ * Sets the number of rows for the current test.
+ */
+func SetNumberOfRows(rows int) {
+    NUMBER_OF_ROWS = rows
+}
+
+/**
+ * Gets the number of rows for the current test.
+ */
+func GetNumberOfRows() int {
+    return NUMBER_OF_ROWS
+}
+
 /**
  * Returns the row for the peg number provided.
  */

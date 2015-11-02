@@ -11,29 +11,27 @@ import (
  */
 type MoveThread struct {
     Job util.BoardJob
-    NumberOfRows int
-    NumberOfTotalPegs int
     ValidMoves *list.List
 }
 
 /**
  * Creates a new MoveThread for the given parameters.
  */
-func NewMoveThread(job util.BoardJob, numberOfRows int, numberOfTotalPegs int) MoveThread {
+func NewMoveThread(job util.BoardJob) MoveThread {
     l := list.New()
-    return MoveThread{job, numberOfRows, numberOfTotalPegs, l}
+    return MoveThread{job, l}
 }
 
 /**
  * Returns the string representation of a MoveThread.
  */
 func MoveThreadToString(moveThread MoveThread) string {
-    return "Rows : " + strconv.Itoa(moveThread.NumberOfRows) + ", Number of Total Pegs : " + strconv.Itoa(moveThread.NumberOfTotalPegs)
+    return "Rows : " + strconv.Itoa(util.GetNumberOfRows()) + ", Number of Total Pegs : " + strconv.Itoa(util.GetTotalPegs())
 }
 
 func RunMoveThread(moveThread MoveThread, channel chan string) {
     // First populate the move thread's list of moves.
-    for i := 0 ; i < moveThread.NumberOfTotalPegs ; i++ {
+    for i := 0 ; i < util.GetTotalPegs() ; i++ {
         if (moveThread.Job.Board[i]) {
             testNeighborMoves(moveThread, i)
         }
@@ -41,7 +39,6 @@ func RunMoveThread(moveThread MoveThread, channel chan string) {
 
     // If there a no valid moves then we need to notify somebody.
     if (moveThread.ValidMoves.Len() == 0) {
-        // TODO(acalabrese): Notify somebody that we finished here.
         channel <- util.BoardJobToString(moveThread.Job)
         return;
     }
@@ -55,7 +52,7 @@ func RunMoveThread(moveThread MoveThread, channel chan string) {
         newBoard[move.OriginalPosition] = false
         newBoard[move.RemovePiece] = false
         newJob := util.NewBoardJobWithMove(moveThread.Job, newBoard, util.MoveToString(move))
-        newMoveThread := NewMoveThread(newJob, moveThread.NumberOfRows, moveThread.NumberOfTotalPegs)
+        newMoveThread := NewMoveThread(newJob)
         go RunMoveThread(newMoveThread, channel)
         element = element.Next()
     }
@@ -65,8 +62,8 @@ func RunMoveThread(moveThread MoveThread, channel chan string) {
  * Private Methods *
  *******************/
 func cloneBoard(moveThread MoveThread) []bool {
-    newBoard := make([]bool, moveThread.NumberOfTotalPegs)
-    for i := 0 ; i < moveThread.NumberOfTotalPegs ; i++ {
+    newBoard := make([]bool, util.GetTotalPegs())
+    for i := 0 ; i < util.GetTotalPegs() ; i++ {
         if (moveThread.Job.Board[i]) {
             newBoard[i] = true
         } else {
@@ -128,11 +125,11 @@ func testNeighborMoves(moveThread MoveThread, pegToInspect int) {
   */
 func testMove(moveThread MoveThread, move util.Move) {
     lR := util.GetRow(move.NewPosition)
-    if (lR < 0 || lR >= moveThread.NumberOfRows) {
+    if (lR < 0 || lR >= util.GetNumberOfRows()) {
         return;
     }
     lD := util.GetDisplacement(move.NewPosition)
-    if (0 <= lR && lR <= moveThread.NumberOfRows && 0 <= lD && lD <= lR) {
+    if (0 <= lR && lR <= util.GetNumberOfRows() && 0 <= lD && lD <= lR) {
         b := (moveThread.Job.Board[move.OriginalPosition] && !moveThread.Job.Board[move.NewPosition] && moveThread.Job.Board[move.RemovePiece])
         if (b) {
             moveThread.ValidMoves.PushFront(move)
