@@ -1,4 +1,5 @@
 import Control.Parallel
+import Control.Parallel.Strategies
 import Debug.Trace
 import System.Environment
 import System.Exit
@@ -207,22 +208,41 @@ recursiveSolve board rows totalPegs moveList =
             then bestMoveList
             else moveList
 
---------------------------------------------------------------------
--- Creates a list of list of moves from each of the starting boards.
--- listOfBoards - the list of initial boards.
--- rows - the number of rows.
--- numberOfPegs - the number of pegs.
--- maxPosition - the max position we need to check.
--- index - the current index we are checking on.
---------------------------------------------------------------------
-listOfBestMoveList listOfBoards rows numberOfPegs maxPosition index =
-    do
-        if (index == maxPosition)
-             then []
-             else par current ([current] ++ rest)
-                 where
-                 current = recursiveSolve (listOfBoards !! index) rows numberOfPegs [(index, index)]
-                 rest = listOfBestMoveList listOfBoards rows numberOfPegs maxPosition (index + 1)
+----------------------------------------------------
+-- Record type to deal with the intial board states.
+----------------------------------------------------
+data InitialState = InitialState [Bool] Int Int [(Int, Int)]
+
+----------------------------------------
+-- Gets the board from an initial state.
+----------------------------------------
+getBoard InitialState -> [Bool]
+getBoard (InitialState board _ _ _) = board
+
+-------------------------------------------------
+-- Gets the number of rows from an initial state.
+-------------------------------------------------
+getRows InitialState -> Int
+getRows (InitialState _ row _ _) = row
+
+-------------------------------------------------------
+-- Gets the total number of pegs from an initial state.
+-------------------------------------------------------
+getTotalPegs InitialState -> Int
+getTotalPegs (InitialState _ _ pegs _) = pegs
+
+--------------------------------------------
+-- Gets the move list from an initial state.
+--------------------------------------------
+getMoves InitialState -> [(Int, Int)]
+getMoves (InitialState _ _ _ moves) = moves
+------------------------------------------------------------
+
+-----------------------------------------
+-- Solves the board for an initial state.
+-- state - the initial state of a board.
+-----------------------------------------
+solveInitialState state = recursiveSolve (getBoard state) (getRows state) (getTotalPegs state) (getMoves state)
 
 ----------------------------------------------------------------------------------------------------
 -- Solves a peg game board for the most pegs left with no available move left for a given number of
@@ -236,7 +256,9 @@ solve n =
         let posToCheck = (quot numOfPegs 2) + 1
         let fullBoard = [ True | _ <- [1..numOfPegs] ]
         let listOfBoards = [[False] ++ [ True | _ <- [2..numOfPegs]]] ++ [ slice 0 (i-1) fullBoard ++ [False] ++ slice (i+1) numOfPegs fullBoard | i <- [1..posToCheck]]
-        let arr = listOfBestMoveList listOfBoards n numOfPegs posToCheck 0
+        --let arr = listOfBestMoveList listOfBoards n numOfPegs posToCheck 0
+        let boardStates = [InitialState (listOfBoards !! i) n (numOfPegs - 1) [(i, i)] | i <- [1..posToCheck]]
+        let arr = map solveInitialState boardStates `using` parList rseq
         getShortestList arr []
 
 
