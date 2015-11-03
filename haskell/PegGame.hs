@@ -14,13 +14,11 @@ slice from to xs = take (to - from + 1) (drop from xs)
 -- b - the shortest list currently
 -----------------------------------------------
 getShortestList:: [[(Int, Int)]] -> [(Int, Int)] ->[(Int, Int)]
+getShortestList [] b = b
 getShortestList l b =
-    if (l == [])
-        then b
-        else do
-            if (((length b) < (length (head l))) && b /= [])
-                then getShortestList (tail l) b
-                else getShortestList (tail l) (head l)
+    if (((length b) < (length (head l))) && b /= [])
+        then getShortestList (tail l) b
+        else getShortestList (tail l) (head l)
 
 --------------------------------------------------------
 -- Used to get the row that corresponds to a peg number.
@@ -28,9 +26,18 @@ getShortestList l b =
 -- index - current index that we are looking at.
 --------------------------------------------------------
 getRow:: Int -> Int -> Int
-getRow pegNumber index =
-    if ((totalPegsTable !! index) <= pegNumber)
-        then getRow pegNumber (index + 1)
+getRow pegNumber index = getRowHelper pegNumber totalPegsTable index
+
+--------------------------------------------------------------------------
+-- Helper function for getRow.
+-- pegNumber - the index of the peg.
+-- pegTable - the part of the list we are still using from totalPegsTable.
+-- index - current index that we are looking at.
+--------------------------------------------------------------------------
+getRowHelper :: Int -> [Int] -> Int -> Int
+getRowHelper pegNumber pegTable index =
+    if ((head pegTable) <= pegNumber)
+        then getRowHelper pegNumber (tail pegTable) (index + 1)
         else index
 
 ------------------------------------------------------------
@@ -38,7 +45,18 @@ getRow pegNumber index =
 -- pegNumber - the index of the peg.
 ------------------------------------------------------------
 getDisplacement:: Int -> Int
-getDisplacement pegNumber = pegNumber - (totalPegsTable !! ((getRow pegNumber 0) - 1))
+getDisplacement pegNumber = getDisplacementHelper pegNumber totalPegsTable ((getRow pegNumber 0) - 1)
+
+--------------------------------------------------------------------------
+-- Used to help getDisplacement.
+-- pegNumber - the index of the peg.
+-- pegTable - the part of the list we are still using from totalPegsTable.
+-- index - the current index that we are looking at.
+--------------------------------------------------------------------------
+getDisplacementHelper :: Int -> [Int] -> Int -> Int
+getDisplacementHelper pegNumber pegTable 0 = pegNumber - (head pegTable)
+getDisplacementHelper pegNumber pegTable index =
+    getDisplacementHelper pegNumber (tail pegTable) (index - 1)
 
 ------------------------------------------------------------------------
 -- Get the peg number corresponding to a given row and displacement.
@@ -50,6 +68,25 @@ getPegNumber row displacement =
     if (row < 1 || row > length totalPegsTable || displacement < 0 || displacement >= row)
         then -1
         else (totalPegsTable !! (row - 1)) + displacement
+
+--------------------------------------------------------------------------
+-- A helper function for getPegNumber
+-- pegTable - the part of the list we are still using from totalPegsTable.
+-- index - the current index that we are looking at.
+-- displacement - the displacement in the row.
+--------------------------------------------------------------------------
+getPegNumberHelper :: [Int] -> Int -> Int -> Int
+getPegNumberHelper pegTable 0 displacement = (head pegTable) + displacement
+getPegNumberHelper pegTable index displacement = getPegNumberHelper (tail pegTable) (index - 1) displacement
+
+------------------------------------------
+-- Gets the truth value of a specific peg.
+-- board - the board in question.
+-- index - the peg we want the value for.
+------------------------------------------
+accessPeg :: [Bool] -> Int -> Bool
+accessPeg board 0 = head board
+accessPeg board index = accessPeg (tail board) (index - 1)
 
 -------------------------------------------------------------------------------------------------
 -- Tests whether a move is valid or not. There are multiple conditions that need to be satisfied:
@@ -74,7 +111,7 @@ testMove oIndex nIndex rIndex board rows =
             else do
                 let lD = getDisplacement nIndex
                 if (1 <= lR && lR <= rows && 0 <= lD && lD < lR)
-                    then ((board !! oIndex) && (not (board !! nIndex)) && (board !! rIndex))
+                    then ((accessPeg board oIndex) && (not (accessPeg board nIndex)) && (accessPeg board rIndex))
                     else False
 
 ----------------------------------------------------------------------------
@@ -86,7 +123,7 @@ testMove oIndex nIndex rIndex board rows =
 ----------------------------------------------------------------------------
 applyMove:: Int -> Int -> Int -> [Bool] -> [Bool]
 applyMove oIndex nIndex rIndex board =
-    [if (((board !! i) && i /= oIndex && i /= rIndex) || (i == nIndex)) then True else False | i <- [0..((length board) - 1)]]
+    [if (((accessPeg board i) && i /= oIndex && i /= rIndex) || (i == nIndex)) then True else False | i <- [0..((length board) - 1)]]
 
 --------------------------------------------------------------------------
 -- Tests a specific move and calls the recursive solve method if it works.
@@ -117,13 +154,11 @@ testAndApply oIndex nIndex rIndex board rows totalPegs moveList =
 -- Returns a list of move lists that are considered valid.
 -------------------------------------------------------------------------------
 getCombinedValidList:: [(Bool, [(Int, Int)])] -> [[(Int, Int)]] -> [[(Int, Int)]]
+getCombinedValidList [] r = r
 getCombinedValidList l r =
-    if (l == [])
-        then r
-        else
-            if (fst (head l))
-                then getCombinedValidList (tail l) (r ++ [(snd (head l))])
-                else getCombinedValidList (tail l) r
+    if (fst (head l))
+        then getCombinedValidList (tail l) (r ++ [(snd (head l))])
+        else getCombinedValidList (tail l) r
 
 -------------------------------------------------------------------------------------------------
 -- This tests all 6 possible moves to see if any are possible. If they are possible, then it will
@@ -166,7 +201,7 @@ recursiveSolve:: [Bool] -> Int -> Int -> [(Int, Int)] -> [(Int, Int)]
 recursiveSolve board rows totalPegs moveList =
     do
         let validMove = False
-        let boardMoveList = [testNeighborMoves i board rows totalPegs moveList | i <- [0..totalPegs - 1], (board !! i)]
+        let boardMoveList = [testNeighborMoves i board rows totalPegs moveList | i <- [0..totalPegs - 1], (accessPeg board i)]
         let bestMoveList = getShortestList (getCombinedValidList boardMoveList []) []
         if (bestMoveList /= [])
             then bestMoveList
