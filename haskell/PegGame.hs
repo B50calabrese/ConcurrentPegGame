@@ -216,25 +216,25 @@ data InitialState = InitialState [Bool] Int Int [(Int, Int)]
 ----------------------------------------
 -- Gets the board from an initial state.
 ----------------------------------------
-getBoard InitialState -> [Bool]
+getBoard :: InitialState -> [Bool]
 getBoard (InitialState board _ _ _) = board
 
 -------------------------------------------------
 -- Gets the number of rows from an initial state.
 -------------------------------------------------
-getRows InitialState -> Int
+getRows :: InitialState -> Int
 getRows (InitialState _ row _ _) = row
 
 -------------------------------------------------------
 -- Gets the total number of pegs from an initial state.
 -------------------------------------------------------
-getTotalPegs InitialState -> Int
+getTotalPegs :: InitialState -> Int
 getTotalPegs (InitialState _ _ pegs _) = pegs
 
 --------------------------------------------
 -- Gets the move list from an initial state.
 --------------------------------------------
-getMoves InitialState -> [(Int, Int)]
+getMoves :: InitialState -> [(Int, Int)]
 getMoves (InitialState _ _ _ moves) = moves
 ------------------------------------------------------------
 
@@ -263,12 +263,15 @@ solve n =
 
 
 showMoves :: (Int, Int) -> String
-showMoves (a, b) = "(" ++ show a ++ ", " ++ show b ++ ")"
+showMoves (a, b) = 
+    if (a == b)
+        then ""
+        else "(" ++ show a ++ ", " ++ show b ++ ")"
 
 main = do
     n <- getArgs
     let rows = read (n !! 1) :: Int
     let moves = solve rows
-    putStrLn ("(" ++ show ((totalPegsTable !! rows) - (length moves)) ++ ", " ++ show (fst (moves !! 0)) ++ ")")
-    putStrLn (unlines (map showMoves moves))
+    putStrLn ("(" ++ show (fst (moves !! 0)) ++ ", " ++ show ((length moves) - 1) ++ ")")
+    putStrLn (unlines (map showMoves (tail moves)))
 
