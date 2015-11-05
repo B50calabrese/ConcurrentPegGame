@@ -2,7 +2,6 @@ package util
 
 import (
     "container/list"
-    "strconv"
 )
 
 /**
@@ -30,10 +29,10 @@ func NewBoardState(board []bool, pegsLeft int, initialPeg int) *BoardState {
  */
 func GetBoardMoveString(state *BoardState) string {
     element := state.PreviousMoves.Front()
-    str := "(" + strconv.Itoa(state.InitialPeg) + "," + strconv.Itoa(GetTotalPegs() - state.PreviousMoves.Len() - 1 )+ ")"
+    str := ""
     for i := 0 ; i < state.PreviousMoves.Len() ; i = i + 1 {
         move := element.Value.(Move)
-        str = str + "\n" + MoveToString(move)
+        str = str + MoveToString(move) + "\n"
         element = element.Next()
     }
     return str

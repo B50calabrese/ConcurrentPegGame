@@ -272,6 +272,6 @@ main = do
     n <- getArgs
     let rows = read (n !! 1) :: Int
     let moves = solve rows
-    putStrLn ("(" ++ show (fst (moves !! 0)) ++ ", " ++ show ((length moves) - 1) ++ ")")
+    putStrLn ("(" ++ show (fst (moves !! 0)) ++ ", " ++ show ((length moves)) ++ ")")
     putStrLn (unlines (map showMoves (tail moves)))
 

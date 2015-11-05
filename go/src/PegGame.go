@@ -9,6 +9,7 @@ import (
 )
 
 var bestScore = 0
+var bestStart = 0
 var bestString = ""
 
 /**
@@ -53,7 +54,8 @@ func main() {
     for i := 0 ; i < maxPegs ; i = i + 1 {
         <- returnChannel
     }
-    
+
+    fmt.Println("(" + strconv.Itoa(bestStart) + "," + strconv.Itoa(totalPegs - bestScore) + ")")
     fmt.Println(bestString)
 }
 
@@ -67,6 +69,7 @@ func createUpdateFunction() chan *util.BoardState {
             state := <- updateChannel
             if (state.PegsLeft > bestScore) {
                 bestScore = state.PegsLeft
+                bestStart = state.InitialPeg
                 bestString = util.GetBoardMoveString(state)
             }
         }
