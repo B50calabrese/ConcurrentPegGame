@@ -1,0 +1,9 @@
+To build the project, execute the following command:
+
+./build.sh
+
+To run the project, execute the following command:
+
+./build.sh run $1
+
+Where $1 is the value for n.

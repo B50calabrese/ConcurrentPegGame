@@ -1,14 +1,9 @@
-Packages to install:
-monad-par
-
-To build:
+To build enter the following command:
 
 ./build.sh
 
-To run:
+To run the program type the following:
 
-./PegGame -s <rows>
+./build.sh run $1
 
-To clean:
-
-./build clean
+Where $1 is the value for n.
